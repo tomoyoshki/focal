@@ -1,0 +1,273 @@
+# data paths  
+pretrain_index_file: "Replace with your pretrain index file path"
+vehicle_classification:
+        num_classes: 7  # number of classes
+        class_names: ["Polaris", "Warhog", "Truck", "motor", "tesla", "mustang", "walk"]
+        train_index_file: "Replace with your train index file path"
+        val_index_file: "Replace with your index file path"
+        test_index_file: "Replace with your index file path"
+distance_classification:
+        num_classes: 3 # number of classes
+        train_index_file: "Replace with your index file path"
+        val_index_file: "Replace with your index file path"
+        test_index_file: "Replace with your index file path"
+speed_classification:
+        num_classes: 4  # number of classes
+        class_names: ["5", "10", "15", "20"]
+        train_index_file: "Replace with your index file path"
+        val_index_file: "Replace with your index file path"
+        test_index_file: "Replace with your index file path"
+
+repetition: 3
+
+
+# Segments
+num_segments: 10
+
+# Locations 
+num_locaiton: 1
+location_names: ["shake"]
+
+# Modality names
+num_sensors: 2
+modality_names: ["seismic", "audio"]
+
+# Location modalities
+loc_modalities: 
+        shake: ["seismic", "audio"]
+loc_mod_in_freq_channels:
+        shake:
+                audio: 2
+                seismic: 2
+                acc: 6
+loc_mod_in_time_channels:
+        shake:
+                audio: 1
+                seismic: 1
+                acc: 3
+loc_mod_spectrum_len:
+        shake:
+                audio: 1600
+                seismic: 20
+                acc: 20
+
+# For sequence-based contrastive learning 
+seq_len: 4
+
+
+# DeepSense config
+DeepSense:
+        dropout_ratio: 0.2 
+        # single interval + location + modality
+        loc_mod_in_conv_stride:
+                audio: [1, 80]
+                seismic: [1, 1]
+        loc_mod_conv_lens: 
+                audio: [[1, 80], [1, 5], [1, 5]]
+                seismic: [[1, 3], [1, 3], [1, 3]]
+        loc_mod_out_channels: 128
+        loc_mod_conv_inter_layers: 4
+        # single interval + location
+        loc_conv_lens: [[1, 4], [1, 4], [1, 4]]
+        loc_out_channels: 128
+        loc_conv_inter_layers: 3
+        # recurrent layer
+        recurrent_dim: 256
+        recurrent_layers: 2
+        # FC layer
+        fc_dim: 512
+        pretrained_head: "linear"
+        # Optimizer config
+        optimizer:
+                name: "AdamW"
+                start_lr: 0.0001
+                warmup_lr: 0.000001
+                min_lr: 0.0000001
+                clip_grad: 5.0
+                weight_decay: 0.05
+        # LR scheduler
+        lr_scheduler:
+                name: "step"
+                warmup_prefix: True
+                warmup_epochs: 0
+                train_epochs: 1500
+                start_epoch: 0
+                decay_epochs: 300
+                decay_rate: 0.2
+        # Augmenters
+        random_augmenters:
+                time_augmenters: ["no"]
+                freq_augmenters: ["phase_shift"]
+        fixed_augmenters:
+                time_augmenters: ["mixup"]
+                freq_augmenters: ["no"]
+
+SW_Transformer:
+        dropout_ratio: 0.2
+        drop_path_rate: 0.1
+        attn_drop_rate: 0.2
+        # loc mod freq feature
+        in_stride:
+                audio: 1
+                seismic: 1
+        # single modality
+        time_freq_out_channels: 64
+        time_freq_head_num: 4
+        time_freq_block_num: 
+                audio: [2, 2, 4]
+                seismic: [2, 2, 4]
+        # modality fusion
+        mod_out_channels: 256
+        mod_head_num: 4
+        mod_block_num: 2
+        # location fusion
+        loc_out_channels: 256 # loc_out_channels == mod_out_channels
+        loc_head_num: 4
+        loc_block_num: 2
+        # SwinTransformer configs
+        window_size: 
+                audio: [3, 3] 
+                seismic: [3, 3] 
+        mlp_ratio: 4.
+        qkv_bias: True
+        APE: False
+        patch_norm: True
+        patch_size:
+                freq:
+                        audio: [1, 40]
+                        seismic: [1, 1]
+        # FC layer
+        fc_dim: 512
+        pretrained_head: "linear"
+        # Optimizer config
+        optimizer:
+                name: "AdamW"
+                start_lr: 0.0001
+                warmup_lr: 0.000001
+                min_lr: 0.0000001
+                clip_grad: 5.0
+                weight_decay: 0.05
+        # LR scheduler
+        lr_scheduler:
+                name: "cosine"
+                warmup_prefix: True
+                warmup_epochs: 0
+                train_epochs: 500
+                start_epoch: 0
+                decay_epochs: 100
+                decay_rate: 0.2
+        # Data Augmenters:
+        random_augmenters:
+                time_augmenters: ["no"]
+                freq_augmenters: ["no"]
+        fixed_augmenters:
+                time_augmenters: ["mixup"]
+                freq_augmenters: ["phase_shift"]
+
+FOCAL:
+        emb_dim: 256
+        temperature: 
+                SW_Transformer: 0.07
+                DeepSense: 0.5
+        ranking_margin: 0.0
+        inter_rank_margin: 1
+        intra_rank_margin: 0.05
+        shared_contrastive_loss_weight: 1
+        private_contrastive_loss_weight: 1
+        orthogonal_loss_weight: 3
+        rank_loss_weight: 5
+        # Pre training  
+        pretrain_optimizer:
+                name: "AdamW"
+                start_lr: 0.001
+                warmup_lr: 0.000001
+                min_lr: 0.0000001
+                clip_grad: 5.0
+                weight_decay: 0.05
+        pretrain_lr_scheduler:
+                name: "cosine"
+                warmup_prefix: True
+                warmup_epochs: 0
+                train_epochs: 6000
+                start_epoch: 0
+                decay_epochs: 500
+                decay_rate: 0.2
+        # Fine tuning 
+        finetune_optimizer:
+                name: "Adam"
+                start_lr: 0.001
+                warmup_lr: 0.000001
+                min_lr: 0.000001
+                clip_grad: 5.0
+                weight_decay:  
+                        SW_Transformer: 0.005
+                        DeepSense: 0.005
+                decay_rate: 0.2
+        finetune_lr_scheduler:
+                name: "cosine"
+                warmup_prefix: True
+                warmup_epochs: 0
+                train_epochs: 200
+                start_epoch: 0
+                decay_epochs: 50
+                decay_rate: 0.2
+        # Augmenters
+        random_augmenters:
+                time_augmenters: ["permutation", "negation", "time_warp", "horizontal_flip", "mag_warp", "scaling"]
+                freq_augmenters: ["phase_shift"]
+
+# ------------------------------------------- Data Augmenter Configs ------------------------------------------
+# Mixup config
+mixup:
+        mixup_alpha: 1.0
+        cutmix_alpha: 1.0
+        cutmix_minmax: null
+        prob: 1.0
+        switch_prob: 0.75
+        mode: 'random_batch'
+        label_smoothing: 0
+        num_classes: 7
+
+jitter:
+        std_in_percent: 0.2
+        prob: 0.5
+
+rotation:
+        angles: [90, 180, 270]
+
+permutation:
+        prob: 0.5
+
+scaling:
+        prob: 0.5
+        std: 0.2
+
+time_warp:
+        prob: 0.5
+        magnitude: 0.2
+        order: 6
+
+mag_warp:
+        prob: 0.5
+        magnitude: 0.05
+        order: 4
+
+negation:
+        prob: 0.5
+
+channel_shuffle:
+        prob: 0.5
+
+freq_mask:
+        prob: 0.5 
+        mask_ratio: 0.3
+
+time_mask:
+        prob: 0.5
+        mask_ratio: 0.3
+
+phase_shift:
+        prob: 0.5 
+
+horizontal_flip:
+        prob: 0.5
