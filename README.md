@@ -26,7 +26,7 @@ This paper proposes a novel contrastive learning framework, called FOCAL, for ex
 
 MOD is a self-collected dataset using acoustic (8000Hz) and seismic (100Hz) signals to classify moving vehicle types. The pretrain dataset includes lots of 10 classes, and the downstream tasks include vehicle classification, distance classification, and speed classification.
 
-- Vehicle data: [Box link to appear](https://www.box.com)
+- Vehicle data: [Box link](https://uofi.box.com/s/bv37vqfd0a5d9rhnvfoo7gld96gtj8jv)
 - Distance speed raw data: [Box link](https://uofi.box.com/s/8yffx3417mrxbdsqqtder4d7kk7rryb8)
 
 ### Data preprocessing
